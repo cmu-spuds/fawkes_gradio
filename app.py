@@ -1,6 +1,5 @@
 from fawkes.protection import Fawkes
 import gradio as gr
-import os
 
 def predict(level, img):
   # print(img)
@@ -10,4 +9,6 @@ def predict(level, img):
   # print(os.listdir('/tmp'))
   return splt[0] + "_cloaked." + splt[1]
 
-gr.Interface(fn=predict, inputs=[gr.inputs.Dropdown(["low", "mid", "high"], label="Protection Level"), gr.inputs.Image(type='filepath')], outputs=gr.outputs.Image(type="pil")).launch()
+gr.Interface(fn=predict, inputs=[gr.components.Dropdown(["low", "mid", "high"], label="Protection Level"),
+                                 gr.components.Image(type='filepath')],
+                                 outputs=gr.components.Image(type="pil")).launch(show_error=True)
