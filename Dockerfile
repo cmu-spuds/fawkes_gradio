@@ -9,7 +9,7 @@ RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir --no-warn-script-location --user typing-extensions -U
 
 # Stage 2: Runtime
-FROM nvidia/cuda:11.3.1-cudnn8-runtime
+FROM nvidia/cuda:11.0.3-cudnn8-runtime
 
 RUN rm /etc/apt/sources.list.d/cuda.list
 RUN rm /etc/apt/sources.list.d/nvidia-ml.list
@@ -26,5 +26,8 @@ RUN apt update && \
     apt clean && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /root/.local/lib/python3.7/site-packages /usr/local/lib/python3.7/dist-packages
 COPY app.py app.py
+
+# RUN ln -s /usr/local/cuda/lib64/libcusolver.so.11 /usr/local/cuda/lib64/libcusolver.so.10
+
 CMD ["python3", "app.py"]
 EXPOSE 7860
