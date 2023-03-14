@@ -1,2 +1,2 @@
-gradio==3.0.20
+gradio==3.14.0
 fawkes==1.0.4
