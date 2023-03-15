@@ -20,17 +20,14 @@ RUN rm /etc/apt/sources.list.d/cuda.list && \
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt update && \
-    apt remove -y python3 python
+    apt purge -y python3 python && \
     apt install --no-install-recommends -y build-essential software-properties-common libgl1-mesa-glx && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
     apt install --no-install-recommends -y python3.7 python3.7-distutils && \
-    # update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2 && \
     apt clean && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /root/.local/lib/python3.7/site-packages /usr/local/lib/python3.7/dist-packages
 COPY app.py app.py
-
-# RUN ln -s /usr/local/cuda/lib64/libcusolver.so.11 /usr/local/cuda/lib64/libcusolver.so.10
 
 CMD ["python3", "-u", "app.py"]
 EXPOSE 7860
