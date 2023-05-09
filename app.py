@@ -1,8 +1,10 @@
 from fawkes.protection import Fawkes
 from fawkes.utils import Faces, reverse_process_cloaked
 from fawkes.differentiator import FawkesMaskGeneration
+from keras.preprocessing import image
 import numpy as np
 import gradio as gr
+from PIL import ExifTags
 # import os
 
 IMG_SIZE = 112
@@ -16,7 +18,9 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
                        separate_target=True, debug=False, no_align=False, exp="", maximize=True,
                        save_last_on_failed=True):
   
-  print(img.ndim)
+  img = img.convert('RGB')
+  img = image.img_to_array(img)
+
   fwks = Fawkes("extractor_2", '0', 1, mode=level)
 
   current_param = "-".join([str(x) for x in [fwks.th, sd, fwks.lr, fwks.max_step, batch_size, format,
@@ -25,8 +29,7 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
   original_images = faces.cropped_faces
 
   if len(original_images) == 0:
-      print("No face detected. ")
-      return 2
+      raise Exception("No face detected. ")
   original_images = np.array(original_images)
 
   if current_param != fwks.protector_param:
@@ -58,7 +61,9 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
       reverse_process_cloaked(protected_images, preprocess=PREPROCESS),
       reverse_process_cloaked(original_images, preprocess=PREPROCESS))
 
-  return final_images[-1]
+  # print(final_images)
+
+  return final_images[-1].astype(np.uint8)
   print("Done!")
 
 
@@ -67,6 +72,6 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
   # print(os.listdir('/tmp'))
   return splt[0] + "_cloaked.jpeg"
 
-gr.Interface(fn=predict, inputs=[gr.components.Image(type='numpy'),
+gr.Interface(fn=predict, inputs=[gr.components.Image(type='pil'),
                                  gr.components.Radio(["low", "mid", "high"], label="``Protection Level")],
-                                 outputs=gr.components.Image(type="pil"), allow_flagging="never").launch(show_error=True, quiet=False)
+                                 outputs=gr.components.Image(type="numpy"), allow_flagging="never").launch(show_error=True, quiet=False)
