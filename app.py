@@ -73,5 +73,5 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
   return splt[0] + "_cloaked.jpeg"
 
 gr.Interface(fn=predict, inputs=[gr.components.Image(type='pil'),
-                                 gr.components.Radio(["low", "mid", "high"], label="``Protection Level")],
+                                 gr.components.Radio(["low", "mid", "high"], label="Protection Level")],
                                  outputs=gr.components.Image(type="numpy"), allow_flagging="never").launch(show_error=True, quiet=False)
