@@ -1,32 +1,22 @@
-FROM python:3.7-slim as builder
+FROM python:3.8-slim as builder
 
 RUN apt update && \
-    apt install --no-install-recommends -y build-essential gcc
+    apt install --no-install-recommends -y build-essential gcc git
 
 COPY requirements.txt /requirements.txt
 
 RUN python -m pip install --upgrade pip && \
-    pip install --no-cache-dir --no-warn-script-location --user -r requirements.txt && \
-    pip install --no-cache-dir --no-warn-script-location --user typing-extensions -U
+    pip install --no-cache-dir --no-warn-script-location --user -r requirements.txt
 
 # Stage 2: Runtime
-FROM nvidia/cuda:11.0.3-cudnn8-runtime
+FROM tensorflow/tensorflow:2.13.0-gpu
 ENV GRADIO_SERVER_NAME=0.0.0.0
 ENV TZ=America/New_York
 
-RUN rm /etc/apt/sources.list.d/cuda.list && \
-    rm /etc/apt/sources.list.d/nvidia-ml.list
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
 RUN apt update && \
-    apt purge -y python3 python && \
-    apt install --no-install-recommends -y build-essential software-properties-common libgl1-mesa-glx && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt install --no-install-recommends -y python3.7 python3.7-distutils && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2 && \
+    apt install --no-install-recommends -y libgl1-mesa-glx && \
     apt clean && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /root/.local/lib/python3.7/site-packages /usr/local/lib/python3.7/dist-packages
+COPY --from=builder /root/.local/lib/python3.8/site-packages /usr/local/lib/python3.8/dist-packages
 COPY app.py app.py
 
 CMD ["python3", "-u", "app.py"]
