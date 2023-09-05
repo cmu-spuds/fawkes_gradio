@@ -1,14 +1,18 @@
 from fawkes.protection import Fawkes
-from fawkes.utils import Faces, reverse_process_cloaked
+from fawkes.utils import Faces, reverse_process_cloaked, load_extractor
 from fawkes.differentiator import FawkesMaskGeneration
 from keras.preprocessing import image
 import numpy as np
 import gradio as gr
 from PIL import ExifTags
-# import os
 
 IMG_SIZE = 112
 PREPROCESS = 'raw'
+
+# To pre-emptively download the files at boot
+fwks_l = Fawkes("extractor_2", '0', 1, mode='low')
+fwks_m = Fawkes("extractor_2", '0', 1, mode='mid')
+fwks_h = Fawkes("extractor_2", '0', 1, mode='high')
 
 def generate_cloak_images(protector, image_X, target_emb=None):
     cloaked_image_X = protector.compute(image_X, target_emb)
@@ -21,7 +25,14 @@ def predict(img, level, th=0.04, sd=1e7, lr=10, max_step=500, batch_size=1, form
   img = img.convert('RGB')
   img = image.img_to_array(img)
 
-  fwks = Fawkes("extractor_2", '0', 1, mode=level)
+  if level == 'low':
+    fwks = fwks_l
+  elif level == 'mid':
+    fwks = fwks_m
+  elif level == 'high':
+    fwks = fwks_h
+
+#   fwks = Fawkes("extractor_2", '0', 1, mode=level)
 
   current_param = "-".join([str(x) for x in [fwks.th, sd, fwks.lr, fwks.max_step, batch_size, format,
                                               separate_target, debug]])
