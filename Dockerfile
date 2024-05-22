@@ -1,4 +1,4 @@
-FROM python:3.8-slim as builder
+FROM python:3.11-slim as builder
 
 RUN apt update && \
     apt install --no-install-recommends -y build-essential gcc git
@@ -16,7 +16,7 @@ ENV TZ=America/New_York
 RUN apt update && \
     apt install --no-install-recommends -y libgl1-mesa-glx && \
     apt clean && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /root/.local/lib/python3.8/site-packages /usr/local/lib/python3.8/dist-packages
+COPY --from=builder /root/.local/lib/python3.11/site-packages /usr/local/lib/python3.11/dist-packages
 COPY app.py app.py
 
 CMD ["python3", "-u", "app.py"]
