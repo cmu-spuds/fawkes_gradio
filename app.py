@@ -1,7 +1,7 @@
 from fawkes.protection import Fawkes
 from fawkes.utils import Faces, reverse_process_cloaked
 from fawkes.differentiator import FawkesMaskGeneration
-from keras import utils
+from keras import utils, ops
 import numpy as np
 import gradio as gr
 import spaces
@@ -38,7 +38,7 @@ def preproc(img):
 @spaces.GPU
 def predict(
     img,
-    level,
+    level: str | Fawkes,
     sd=1e7,
     format="png",
     separate_target=True,
@@ -47,7 +47,8 @@ def predict(
     save_last_on_failed=True,
     progress=gr.Progress(track_tqdm=True),
 ):
-    img = preproc(img)
+    if not ops.is_tensor(img):
+        img = [preproc(img)]
 
     if level == "low":
         fwks = Fawkes("extractor_2", 1, mode="low")
@@ -55,6 +56,8 @@ def predict(
         fwks = Fawkes("extractor_2", 1, mode="mid")
     elif level == "high":
         fwks = Fawkes("extractor_2", 1, mode="high")
+    elif isinstance(level, Fawkes):
+        fwks = level
 
     current_param = "-".join(
         [
@@ -71,12 +74,12 @@ def predict(
             ]
         ]
     )
-    faces = Faces(["./Current Face"], [img], fwks.aligner, verbose=0, no_align=False)
+    faces = Faces(["./Current Face"], img, fwks.aligner, verbose=0, no_align=False)
     original_images = faces.cropped_faces
 
     if len(original_images) == 0:
         raise Exception("No face detected. ")
-    original_images = np.array(original_images)
+    original_images = ops.array(original_images)
 
     if current_param != fwks.protector_param:
         fwks.protector_param = current_param
@@ -101,6 +104,7 @@ def predict(
             save_last_on_failed=save_last_on_failed,
         )
     protected_images = generate_cloak_images(fwks.protector, original_images)
+
     faces.cloaked_cropped_faces = protected_images
 
     final_images, _ = faces.merge_faces(
@@ -108,18 +112,19 @@ def predict(
         reverse_process_cloaked(original_images, preprocess=PREPROCESS),
     )
 
-    return final_images[-1].astype(np.uint8)
+    return ops.cast(final_images, 'uint8')
 
 
 # Download extractors pre-emptively
 get_extractors()
 
-gr.Interface(
-    fn=predict,
-    inputs=[
-        gr.components.Image(type="pil"),
-        gr.components.Radio(["low", "mid", "high"], label="Protection Level"),
-    ],
-    outputs=gr.components.Image(type="pil"),
-    allow_flagging="never",
-).launch(show_error=True, quiet=False)
+if __name__ == "__main__":
+    gr.Interface(
+        fn=predict,
+        inputs=[
+            gr.components.Image(type="pil"),
+            gr.components.Radio(["low", "mid", "high"], label="Protection Level"),
+        ],
+        outputs=gr.components.Image(type="pil"),
+        allow_flagging="never",
+    ).launch(show_error=True, quiet=False)
